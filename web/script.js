@@ -1,26 +1,26 @@
 const daysOfWeek = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
+  "Domingo",
+  "Segunda-feira",
+  "Terça-feira",
+  "Quarta-feira",
+  "Quinta-feira",
+  "Sexta-feira",
+  "Sábado",
 ];
 
 const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 
 function formatDate(date) {
@@ -49,26 +49,66 @@ function updateDateAndTime() {
   setTimeout(updateDateAndTime, 60000);
 }
 
+let temperature = 0;
+
 function updateWeatherData() {
-  const getUrl = "https://web-production-d62e.up.railway.app/getData";
+  const getUrl = "https://api-agromonitor-production.up.railway.app/getdata";
 
   fetch(getUrl)
     .then((response) => response.json())
     .then((data) => {
-      const temperatureElement = document.getElementById("temperature");
-      const humidityElement = document.getElementById("humidity");
+      if (data.temperature !== temperature || temperature === 0) {
+        const temperatureElement = document.getElementById("temperature");
+        const humidityElement = document.getElementById("humidity");
 
-      temperatureElement.textContent = `${data.temperature}°C`;
-      humidityElement.textContent = `UR ${data.humidity}%`;
+        temperatureElement.textContent = `${data.temperature}°C`;
+        humidityElement.textContent = `UR ${data.humidity}%`;
 
-      addSmoothAnimationClass(temperatureElement);
-      addSmoothAnimationClass(humidityElement);
+        addSmoothAnimationClass(temperatureElement);
+        addSmoothAnimationClass(humidityElement);
+        temperature = data.temperature;
+      }
     })
-    .catch((error) => console.error("Erro ao buscar dados da API:", error))
+    .catch((error) =>
+      console.error("Erro ao buscar dados da API (getdata):", error)
+    )
     .finally(() => {
-      setTimeout(updateWeatherData, 5000);
+      setTimeout(updateWeatherData, 2500);
     });
+}
+
+async function fetchAndUpdateWeather() {
+  try {
+    const response = await fetch(
+      "https://api-agromonitor-production.up.railway.app/gethistoric"
+    );
+    const data = await response.json();
+
+    data.forEach((entry, index) => {
+      const dayElement = document.getElementById(`day${index + 1}`);
+      const tempElement = document.getElementById(`temp${index + 1}`);
+      const humidityElement = document.getElementById(`humidity${index + 1}`);
+
+      const isValidDate = !isNaN(new Date(entry.date).getTime());
+      const dayOfWeek = isValidDate ? getDayOfWeek(entry.date) : "Invalid Date";
+
+      console.log(dayOfWeek);
+
+      dayElement.textContent = dayOfWeek;
+      tempElement.textContent = `${entry.temp.toFixed(1)}°C`;
+      humidityElement.textContent = `UR ${entry.humi.toFixed(1)}%`;
+    });
+  } catch (error) {
+    console.error("Erro ao buscar dados da API (gethistoric):", error);
+  }
+}
+
+function getDayOfWeek(dateString) {
+  const date = new Date(dateString);
+  const options = { weekday: "short" };
+  return new Intl.DateTimeFormat("pt-BR", options).format(date);
 }
 
 updateDateAndTime();
 updateWeatherData();
+fetchAndUpdateWeather();

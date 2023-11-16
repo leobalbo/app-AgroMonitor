@@ -8,6 +8,8 @@ const daysOfWeek = [
   "Sábado",
 ];
 
+const daysWithoutSuffix = daysOfWeek.map((day) => day.replace("-feira", ""));
+
 const months = [
   "Janeiro",
   "Fevereiro",
@@ -89,24 +91,17 @@ async function fetchAndUpdateWeather() {
       const tempElement = document.getElementById(`temp${index + 1}`);
       const humidityElement = document.getElementById(`humidity${index + 1}`);
 
-      const isValidDate = !isNaN(new Date(entry.date).getTime());
-      const dayOfWeek = isValidDate ? getDayOfWeek(entry.date) : "Invalid Date";
+      const newData = new Date(
+        new Date(entry.date).setDate(new Date(entry.date).getDate() + 1)
+      );
 
-      console.log(dayOfWeek);
-
-      dayElement.textContent = dayOfWeek;
+      dayElement.textContent = daysWithoutSuffix[newData.getDay()];
       tempElement.textContent = `${entry.temp.toFixed(1)}°C`;
       humidityElement.textContent = `UR ${entry.humi.toFixed(1)}%`;
     });
   } catch (error) {
     console.error("Erro ao buscar dados da API (gethistoric):", error);
   }
-}
-
-function getDayOfWeek(dateString) {
-  const date = new Date(dateString);
-  const options = { weekday: "short" };
-  return new Intl.DateTimeFormat("pt-BR", options).format(date);
 }
 
 updateDateAndTime();
